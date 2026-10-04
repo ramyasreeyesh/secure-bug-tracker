@@ -30,7 +30,7 @@ public class SecurityConfig {
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**").permitAll()
-            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+            .requestMatchers("/", "/index.html", "/*.css", "/*.js").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/bugs/**").hasRole("ADMIN")
             .anyRequest().authenticated()
             )

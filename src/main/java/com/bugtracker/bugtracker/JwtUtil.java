@@ -11,9 +11,15 @@ import java.util.Date;
 public class JwtUtil {
 
     // In production, this should come from an environment variable, not hardcoded
-    private final SecretKey secretKey = Keys.hmacShaKeyFor(
-        "ThisIsASecretKeyForJWTBugTrackerApp1234567890".getBytes()
-    );
+        @org.springframework.beans.factory.annotation.Value("${jwt.secret}")
+    private String jwtSecretString;
+
+    private SecretKey secretKey;
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        this.secretKey = Keys.hmacShaKeyFor(jwtSecretString.getBytes());
+    }
 
     private final long expirationMs = 1000 * 60 * 60 * 10; // 10 hours
 
@@ -23,6 +29,17 @@ public class JwtUtil {
                 .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    private final long refreshExpirationMs = 1000L * 60 * 60 * 24 * 7; // 7 days
+
+    public String generateRefreshToken(String username) {
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
                 .signWith(secretKey)
                 .compact();
     }

@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.security.Principal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,7 +16,10 @@ import static org.mockito.Mockito.*;
 public class BugControllerTest {
 
     @Mock
-    private BugRepository bugRepository;
+    private BugService bugService;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private BugController bugController;
@@ -26,7 +30,7 @@ public class BugControllerTest {
         bug.setId(1L);
         bug.setTitle("Login button broken");
 
-        when(bugRepository.findById(1L)).thenReturn(Optional.of(bug));
+        when(bugService.getBugById(1L)).thenReturn(bug);
 
         Bug result = bugController.getBugById(1L);
 
@@ -36,7 +40,7 @@ public class BugControllerTest {
 
     @Test
     void getBugById_whenBugDoesNotExist_throwsException() {
-        when(bugRepository.findById(99L)).thenReturn(Optional.empty());
+        when(bugService.getBugById(99L)).thenThrow(new ResourceNotFoundException("Bug not found with id: 99"));
 
         assertThrows(ResourceNotFoundException.class, () -> {
             bugController.getBugById(99L);
@@ -45,24 +49,30 @@ public class BugControllerTest {
 
     @Test
     void createBug_savesAndReturnsBug() {
+        User user = new User();
+        user.setUsername("ramya");
+
         Bug newBug = new Bug();
         newBug.setTitle("New bug");
 
-        when(bugRepository.save(any(Bug.class))).thenReturn(newBug);
+        Principal principal = () -> "ramya";
 
-        Bug result = bugController.createBug(newBug);
+        when(userRepository.findByUsername("ramya")).thenReturn(Optional.of(user));
+        when(bugService.createBug(any(Bug.class))).thenReturn(newBug);
+
+        Bug result = bugController.createBug(newBug, principal);
 
         assertNotNull(result);
         assertEquals("New bug", result.getTitle());
-        verify(bugRepository, times(1)).save(newBug);
+        verify(bugService, times(1)).createBug(newBug);
     }
 
     @Test
     void deleteBug_whenExists_deletesSuccessfully() {
-        when(bugRepository.existsById(1L)).thenReturn(true);
+        doNothing().when(bugService).deleteBug(1L);
 
         bugController.deleteBug(1L);
 
-        verify(bugRepository, times(1)).deleteById(1L);
+        verify(bugService, times(1)).deleteBug(1L);
     }
 }

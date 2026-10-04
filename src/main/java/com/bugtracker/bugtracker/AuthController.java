@@ -48,11 +48,37 @@ public class AuthController {
 
         User user = userOpt.get();
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
+
+        user.setRefreshToken(refreshToken);
+        userRepository.save(user);
 
         return ResponseEntity.ok(Map.of(
                 "token", token,
+                "refreshToken", refreshToken,
                 "username", user.getUsername(),
                 "role", user.getRole().name()
         ));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+
+        if (refreshToken == null || !jwtUtil.isTokenValid(refreshToken)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid or expired refresh token"));
+        }
+
+        String username = jwtUtil.extractUsername(refreshToken);
+        Optional<User> userOpt = userRepository.findByUsername(username);
+
+        if (userOpt.isEmpty() || !refreshToken.equals(userOpt.get().getRefreshToken())) {
+            return ResponseEntity.status(401).body(Map.of("error", "Refresh token not recognized"));
+        }
+
+        User user = userOpt.get();
+        String newAccessToken = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
+
+        return ResponseEntity.ok(Map.of("token", newAccessToken));
     }
 }

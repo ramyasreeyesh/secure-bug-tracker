@@ -23,7 +23,9 @@ public class Bug {
     @Enumerated(EnumType.STRING)
     private Priority priority = Priority.MEDIUM;
 
-    private String reportedBy;
+    @ManyToOne
+    @JoinColumn(name = "reported_by_id")
+    private User reportedBy;
 
     // Enums for lifecycle and priority
     public enum Status {
@@ -75,11 +77,11 @@ public class Bug {
         this.priority = priority;
     }
 
-    public String getReportedBy() {
+    public User getReportedBy() {
         return reportedBy;
     }
 
-    public void setReportedBy(String reportedBy) {
+    public void setReportedBy(User reportedBy) {
         this.reportedBy = reportedBy;
     }
 }

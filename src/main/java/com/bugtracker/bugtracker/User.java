@@ -25,6 +25,8 @@ public class User {
         ADMIN, DEVELOPER, REPORTER
     }
 
+    private String refreshToken;
+
     // Getters and Setters
     public Long getId() {
         return id;
@@ -56,5 +58,13 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }
